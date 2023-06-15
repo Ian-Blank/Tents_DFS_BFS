@@ -4,16 +4,17 @@ using System.Drawing;
 using System.Reflection.Metadata;
 using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics.Arm;
+using System.Security.Cryptography.X509Certificates;
 
-int[] collumn = new int[] {3,0,0,2,0,2};
-int[] allrows = new int[] { 2, 0, 2, 1, 1, 1 };
+int[] collumn = new int[] {1,0,0,1,0};
+int[] allrows = new int[] { 1, 1, 0, 0, 0};
 int[,] grid1 = new int[,] 
-{   {0,3,3,0,0,0},
-    {3,0,0,0,0,0},
-    {0,0,0,0,0,0},
-    {3,0,0,0,0,3},
-    {0,0,0,3,0,0},
-    {0,0,0,0,3,0} };
+{   {0,3,0,3,0},
+    {0,0,0,0,0},
+    {0,0,0,0,0},
+    {0,0,0,0,0},
+    {0,0,0,0,0},
+    {0,0,0,0,0} };
 void BFS(Tents puzzle)
 {
     Queue<Node> q = new Queue<Node>();
@@ -44,7 +45,7 @@ void BFS(Tents puzzle)
                                 List<Point> succesor = new List<Point>(node.coords);
                                 Point point = new Point(x + i, j + y);
                                 succesor.Add(point);
-                                if (puzzle.inGrid(i + x, j + y) && tentcheck(node, x + i, y + j) && puzzle.checkRowsCols(succesor))
+                                if (puzzle.inGrid(i + x, j + y) && tentcheck(node, x + i, y + j) && puzzle.checkRowsCols(succesor) && puzzle.grid[x + i, y + j] == 0)
                                 {
                                     Node node1 = new Node(node,point);
                                     q.Enqueue(node1);
@@ -56,14 +57,14 @@ void BFS(Tents puzzle)
                             }
                 }
             }
-        }
-        if (node.generation >= 3) foreach (Point item in node.coords)
+            if (puzzle.isSolution(node.coords) && node.coords.Count > 0)
             {
-                Console.WriteLine("(" + item.X + "," + item.Y + ")");
-                Console.Write("(" + item.X + "," + item.Y + ")");
-            };        
+                puzzle.placeTents(node.coords);
+                
+            }
+        }
     }
-    Console.WriteLine("depth = " + depth + "||  number of iterations = " + iterations);
+    Console.WriteLine(" Breadth-First search results: depth = " + depth + "||  number of iterations = " + iterations);
 }
 
 Console.WriteLine("Please enter size of the puzzle: ");
@@ -72,7 +73,7 @@ Console.WriteLine("Please enter amount of tents in the puzzle: ");
 int tents = int.Parse(Console.ReadLine());
 for (int i = 0; i < 1; i++)
 {
-    Tents puzzle = new Tents(size, tents);
+    Tents puzzle = new Tents(grid1,allrows,collumn);
     puzzle.display();
     BFS(puzzle);
     
@@ -215,20 +216,38 @@ class Tents
         {
             for (int i = 0; i < length; i++)
             {
-                rowCount = 0;
                 colCount = 0;
-                for (int j = 0; j < length; j++)
-                {
-                    if ((p.X == i)) rowCount++;
-                    if ((p.Y == j)) colCount++;
+                rowCount = 0;
+                if (p.X == i) rowCount++;
+                if (p.Y == i) colCount++;
 
-                }
                 if (cols[i] < colCount || rows[i] < rowCount)
                     return false;
             }
         }
         
         return true;
+    }
+
+    public bool isSolution(List<Point> list)
+    {
+        int[] rowCount = new int[length];
+        int[] colCount = new int[length];
+
+        foreach (Point p in list)
+        {
+            for (int i = 0; i < length; i++)
+            {
+                if (p.X == i) rowCount[i]++;
+                if (p.Y == i) colCount[i]++;
+
+                
+            }
+        }
+        if (rowCount.SequenceEqual(rows) && colCount.SequenceEqual(cols))
+            return true;
+
+        return false;
     }
     public Tents(int[,] puzzle, int[] col, int[] row)
     {
@@ -239,9 +258,17 @@ class Tents
 
     public void placeTents(List<Point> list)
     {
+        Queue<Point> queue = new Queue<Point>();
         foreach (Point p in list)
         {
             grid[p.X, p.Y] = 1;
+            queue.Enqueue(p);
+        }
+        display();
+        while(queue.Count > 0)
+        {
+            Point p = queue.Dequeue();
+            grid[p.X, p.Y] = 0;
         }
     }
     public void display()
