@@ -6,15 +6,14 @@ using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics.Arm;
 using System.Security.Cryptography.X509Certificates;
 
-int[] collumn = new int[] {1,0,0,1,0};
-int[] allrows = new int[] { 1, 1, 0, 0, 0};
+int[] allrows = new int[] {1,0,0,1,0};
+int[] collumn = new int[] { 1, 1, 0, 0, 0};
 int[,] grid1 = new int[,] 
 {   {0,3,0,3,0},
     {0,0,0,0,0},
     {0,0,0,0,0},
     {0,0,0,0,0},
-    {0,0,0,0,0},
-    {0,0,0,0,0} };
+    {0,0,0,0,0}};
 void BFS(Tents puzzle)
 {
     Queue<Node> q = new Queue<Node>();
@@ -57,11 +56,12 @@ void BFS(Tents puzzle)
                             }
                 }
             }
-            if (puzzle.isSolution(node.coords) && node.coords.Count > 0)
-            {
-                puzzle.placeTents(node.coords);
-                
-            }
+            
+        }
+        if (puzzle.isSolution(node.coords) && node.coords.Count > 0)
+        {
+            puzzle.placeTents(node.coords);
+
         }
     }
     Console.WriteLine(" Breadth-First search results: depth = " + depth + "||  number of iterations = " + iterations);
@@ -73,7 +73,7 @@ Console.WriteLine("Please enter amount of tents in the puzzle: ");
 int tents = int.Parse(Console.ReadLine());
 for (int i = 0; i < 1; i++)
 {
-    Tents puzzle = new Tents(grid1,allrows,collumn);
+    Tents puzzle = new Tents(size,tents);
     puzzle.display();
     BFS(puzzle);
     
@@ -212,9 +212,10 @@ class Tents
         int rowCount = 0;
         int colCount = 0;
 
-        foreach (Point p in list)
+        
+        for (int i = 0; i < length -1; i++)
         {
-            for (int i = 0; i < length; i++)
+            foreach (Point p in list)
             {
                 colCount = 0;
                 rowCount = 0;
@@ -231,29 +232,36 @@ class Tents
 
     public bool isSolution(List<Point> list)
     {
-        int[] rowCount = new int[length];
-        int[] colCount = new int[length];
+        int rowCount = 0;
+        int colCount = 0;
 
-        foreach (Point p in list)
+        
+        for (int i = 0; i < length; i++)
         {
-            for (int i = 0; i < length; i++)
+            foreach (Point p in list)
             {
-                if (p.X == i) rowCount[i]++;
-                if (p.Y == i) colCount[i]++;
+                rowCount = 0;
+                colCount = 0;
 
-                
+                if (p.X == i) rowCount++;
+                if (p.Y == i) colCount++;
+
+                if (cols[i] != colCount || rows[i] != rowCount)
+                {
+                    return true;
+                }
             }
         }
-        if (rowCount.SequenceEqual(rows) && colCount.SequenceEqual(cols))
-            return true;
+        
 
-        return false;
+        return true;
     }
     public Tents(int[,] puzzle, int[] col, int[] row)
     {
         grid = puzzle;
         rows = row;
         cols = col;
+        length = grid.GetLength(0);
     }
 
     public void placeTents(List<Point> list)
