@@ -6,10 +6,10 @@ using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics.Arm;
 using System.Security.Cryptography.X509Certificates;
 
-int[] allrows = new int[] {1,0,0,1,0};
-int[] collumn = new int[] { 1, 1, 0, 0, 0};
+int[] allrows = new int[] {1,1,0,0,0};
+int[] collumn = new int[] { 1, 0, 1, 0, 0};
 int[,] grid1 = new int[,] 
-{   {0,3,0,3,0},
+{   {3,3,0,0,0},
     {0,0,0,0,0},
     {0,0,0,0,0},
     {0,0,0,0,0},
@@ -22,6 +22,7 @@ void BFS(Tents puzzle)
     Node node;
     int iterations = 0;
     int depth = 0;
+    bool duplicate = false;
     while (q.Count > 0)
     {
         iterations++;
@@ -35,23 +36,42 @@ void BFS(Tents puzzle)
         {
             for (int j = 0; j < puzzle.length; j++)
             {
-                if (puzzle.grid[i, j] == 3 && !puzzle.hasTent(i, j))
+                Point tree = new Point(i,j);
+                if (puzzle.grid[i, j] == 3 && !node.trees.Contains(tree))
                 {
+                    
                     for (int x = -1; x <= 1; x++)
                         for (int y = -1; y <= 1; y++)
+
                             if (Math.Abs(x + y) == 1)
                             {
+                                int ni = x + i;
+                                int nj = y + j;
+                                duplicate = false;
                                 List<Point> succesor = new List<Point>(node.coords);
-                                Point point = new Point(x + i, j + y);
-                                succesor.Add(point);
-                                if (puzzle.inGrid(i + x, j + y) && tentcheck(node, x + i, y + j) && puzzle.checkRowsCols(succesor) && puzzle.grid[x + i, y + j] == 0)
+                                Point newpoint = new Point(ni, nj);
+                                succesor.Add(newpoint);
+                                if (puzzle.inGrid(ni, nj) && tentcheck(node, ni, nj) && puzzle.checkRowsCols(succesor) && puzzle.grid[ni, nj] == 0)
                                 {
-                                    Node node1 = new Node(node,point);
-                                    q.Enqueue(node1);
-                                }
-                                else if (puzzle.inGrid(i + x, j + y))
-                                {
-                                    break;
+                                    if (qlen > 0)
+                                    {
+                                        foreach (Node item in q)
+                                            if (item.Contains(newpoint))
+                                            {
+                                                duplicate= true;
+                                            }
+                                        if (!duplicate)
+                                        {
+                                            Node newnode = new Node(node, newpoint, tree);
+                                            q.Enqueue(newnode);
+                                        }
+                                    }
+                                    else
+                                    {
+                                        Node newnode = new Node(node, newpoint, tree);
+                                        q.Enqueue(newnode);
+                                    }
+                                    
                                 }
                             }
                 }
@@ -61,7 +81,12 @@ void BFS(Tents puzzle)
         if (puzzle.isSolution(node.coords) && node.coords.Count > 0)
         {
             puzzle.placeTents(node.coords);
+            Console.WriteLine("HIT");
 
+        }
+        else if (qlen == q.Count)
+        {
+            puzzle.placeTents(node.coords);
         }
     }
     Console.WriteLine(" Breadth-First search results: depth = " + depth + "||  number of iterations = " + iterations);
@@ -74,6 +99,7 @@ int tents = int.Parse(Console.ReadLine());
 for (int i = 0; i < 1; i++)
 {
     Tents puzzle = new Tents(size,tents);
+    //Tents puzzle = new Tents(grid1,collumn,allrows);
     puzzle.display();
     BFS(puzzle);
     
@@ -238,17 +264,18 @@ class Tents
         
         for (int i = 0; i < length; i++)
         {
+            rowCount = 0;
+            colCount = 0;
             foreach (Point p in list)
             {
-                rowCount = 0;
-                colCount = 0;
+                
 
                 if (p.X == i) rowCount++;
                 if (p.Y == i) colCount++;
 
                 if (cols[i] != colCount || rows[i] != rowCount)
                 {
-                    return true;
+                    return false;
                 }
             }
         }
@@ -315,6 +342,7 @@ class Tents
 class Node
 {
     public List<Point> coords = new List<Point>();
+    public List<Point> trees = new List<Point>();
     public bool visit = false;
     public int generation { get; set; }
 
@@ -323,7 +351,7 @@ class Node
         generation = 0;
     }
 
-    public Node(Node node, Point coord)
+    public Node(Node node, Point coord, Point tree)
     {
         if (node != null)
         {
@@ -333,8 +361,10 @@ class Node
         } else
         {
             coords.Add(coord);
+            
             generation = 1;
         }
+        trees.Add(tree);
     }
     public bool Contains(Point point)
     {
@@ -344,6 +374,3 @@ class Node
 
 
 }
-
-
-
