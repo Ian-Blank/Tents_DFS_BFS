@@ -40,7 +40,7 @@ namespace Tents_DFS_BFS
 
             Random seedrandom = new Random();
             seed = seedrandom.Next();
-            Random rdn = new Random(1392711743);
+            Random rdn = new Random(seed);
             int x = rdn.Next(0, size);
             int y = rdn.Next(0, size);
             int limit = 1000;
